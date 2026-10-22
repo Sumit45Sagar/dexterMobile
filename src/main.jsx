@@ -11,7 +11,7 @@ import './styles.css';
 const actions = [
   ['Site', Building2, 'sites'], ['KYC', FileCheck2, 'kyc'], ['Dynamic Limit', WalletCards, 'limit'],
   ['User Profile', UserRound, 'profile'], ['Contact Us', Contact, 'contact'], ['Cash Loading Fund', Banknote, 'fund'],
-  ['Security Deposit', ShieldCheck, 'deposit'], ['ATM wise Photo', Camera, 'atm'], ['Indent Withdrawn Confirmation', FileText, 'indent'],
+  ['Security Deposit', ShieldCheck, 'deposit'], ['ATM wise Photo', Camera, 'photo'], ['Indent Withdrawn Confirmation', FileText, 'indent'],
   ['Cash Balance Confirmation', Landmark, 'balance']
 ];
 
@@ -72,19 +72,22 @@ function Dashboard({ onNavigate }) {
 
 function Screen({ screen, onBack, onNavigate, toast }) {
   const screens = {
-    kyc: <Kyc toast={toast} />, fund: <Fund onNavigate={onNavigate} />, atm: <AtmSelection onNavigate={onNavigate} />,
+    kyc: <Kyc toast={toast} />, fund: <Fund onNavigate={onNavigate} />, atm: <AtmSelection onNavigate={onNavigate} />, photo: <AtmPhoto toast={toast} />,
     indent: <Indent toast={toast} />, deposit: <Deposit toast={toast} />, contact: <ContactScreen />,
     profile: <Profile toast={toast} />, limit: <DynamicLimit toast={toast} />, sites: <Sites toast={toast} />,
     balance: <Balance onNavigate={onNavigate} />, notification: <Notification />
   };
-  const titles = { kyc: 'KYC / Bank Details', fund: 'Cash Loading Fund', atm: 'ATM ID Selection', indent: 'Indent Confirmation', deposit: 'Security Deposits', contact: 'Contact Us', profile: 'Profile', limit: 'Dynamic Limit', sites: 'Site Details', balance: 'Cash Balance', notification: 'Notifications' };
+  const titles = { kyc: 'KYC / Bank Details', fund: 'Cash Loading Fund', atm: 'ATM ID Selection', photo: 'ATM Wise Photo', indent: 'Indent Confirmation', deposit: 'Security Deposits', contact: 'Contact Us', profile: 'Profile', limit: 'Dynamic Limit', sites: 'Site Details', balance: 'Cash Balance', notification: 'Notifications' };
   return <div className="page"><Header title={titles[screen]} onBack={onBack} action={screen === 'profile' ? <button className="icon-button" onClick={() => toast('Edit profile is coming soon')}><Pencil size={18} /></button> : null} /><main className="screen-content">{screens[screen]}</main></div>;
 }
 
 function Field({ label, placeholder, type = 'text', value, onChange, suffix }) {
   return <label className="field"><span>{label}</span><div className="input-wrap"><input type={type} placeholder={placeholder} value={value} onChange={onChange} />{suffix}</div></label>;
 }
-function SelectField({ label, children }) { return <label className="field"><span>{label}</span><div className="select-wrap"><select defaultValue=""><option value="" disabled>{children}</option><option>Farrukhabad</option><option>Lucknow</option><option>Kanpur Nagar</option></select><ChevronDown size={16} /></div></label>; }
+function SelectField({ label, children, value, onChange, options = ['Farrukhabad', 'Lucknow', 'Kanpur Nagar'] }) {
+  const selectProps = onChange ? { value: value || '', onChange } : { defaultValue: '' };
+  return <label className="field"><span>{label}</span><div className="select-wrap"><select {...selectProps}><option value="" disabled>{children}</option>{options.map(option => <option key={option}>{option}</option>)}</select><ChevronDown size={16} /></div></label>;
+}
 function UploadBox({ label = '+ Upload image or PDF' }) { return <button className="upload-box" onClick={(e) => e.currentTarget.classList.toggle('uploaded')}><ImagePlus size={22} /><span>{label}</span></button>; }
 function PrimaryButton({ children, onClick, outline = false }) { return <button className={outline ? 'button outline' : 'button'} onClick={onClick}>{children}</button>; }
 function SectionTitle({ eyebrow, title, action }) { return <div className="section-heading compact"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div>{action}</div>; }
@@ -109,7 +112,12 @@ function Fund({ onNavigate }) {
 }
 function Metric({ label, value, positive }) { return <div className={positive ? 'metric positive' : 'metric'}><small>{label}</small><strong>{value}</strong></div>; }
 
-function AtmSelection({ onNavigate }) { return <div><div className="search-field"><Search size={18} /><input placeholder="Search ATM ID" /></div><div className="list-label">SELECT AN ATM TO CONTINUE</div><div className="atm-list">{atmData.map((atm, i) => <button className="atm-row" key={atm.id} onClick={() => onNavigate('indent')}><div className="atm-avatar">{String(i + 1).padStart(2, '0')}</div><div><strong>{atm.id}</strong><span>{atm.location}</span></div><div className="atm-meta"><span>13 Oct 2026</span>{atm.status === 'Live' ? <CheckCircle2 className="success" size={19} /> : <XCircle className="danger" size={19} />}<ArrowRight size={16} /></div></button>)}</div></div>; }
+function AtmSelection({ onNavigate }) { return <div><div className="search-field"><Search size={18} /><input placeholder="Search ATM ID" /></div><div className="list-label">SELECT AN ATM TO CONTINUE</div><div className="atm-list">{atmData.map((atm, i) => <button className="atm-row" key={atm.id} onClick={() => onNavigate('indent')}><div className="atm-avatar">{String(i + 1).padStart(2, '0')}</div><div><strong>{atm.id}</strong><span>{atm.location}</span></div><div className="atm-meta"><span>13 Oct 2026</span>{atm.status === 'Live' ? <CheckCircle2 className="success" size={19} /> : <span className="danger status-mark" aria-label="No information">!</span>}<ArrowRight size={16} /></div></button>)}</div></div>; }
+
+function AtmPhoto({ toast }) {
+  const [selectedAtm, setSelectedAtm] = useState('');
+  return <div><div className="form-card"><SelectField label="Select ATM ID" value={selectedAtm} onChange={e => setSelectedAtm(e.target.value)} options={atmData.map(atm => atm.id)}>Select ATM ID</SelectField><div className="photo-guidance"><Camera size={25} /><div><strong>Capture ATM site photo</strong><span>Upload a clear photo of the selected ATM.</span></div></div><button className="capture-box" onClick={() => toast(selectedAtm ? 'Camera capture opened' : 'Select an ATM first')}><Camera size={31} /><strong>Capture or upload photo</strong><span>Use a well-lit image showing the complete ATM and surroundings.</span></button><PrimaryButton onClick={() => toast(selectedAtm ? 'ATM photo submitted' : 'Select an ATM before submitting')}>SUBMIT PHOTO</PrimaryButton></div><div className="photo-note"><CheckCircle2 size={17} /><span>Photos are reviewed by the operations team after submission.</span></div></div>;
+}
 
 function Indent({ toast }) {
   const [counts, setCounts] = useState({ 100: 0, 200: 0, 500: 344 });
